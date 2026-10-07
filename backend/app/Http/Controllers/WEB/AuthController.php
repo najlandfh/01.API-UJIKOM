@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\WEB;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Controller;
 
 class AuthController extends Controller
 {
-    // Menampilkan form login
+    // Menampilkan Form Login
     public function showLoginForm()
     {
         return view('auth.login');
@@ -28,21 +28,29 @@ class AuthController extends Controller
             $user = Auth::user();
 
             // Redirect berdasarkan role
-            if ($user->role == 'admin') {
-                return redirect()->route('admin.dashboard');
-            } elseif ($user->role === 'petugas') {
-                return redirect()->route('petugas.peminjaman.index');
-            } elseif ($user->role === 'peminjam') {
-                return redirect()->route('peminjam.alat.index');
-            }
+            switch ($user->role) {
+                case 'admin':
+                    return redirect()->route('admin.dashboard');
 
-            Auth::logout();
-            return redirect()->route('login')->with('error', 'role tidak dikenali.');
+                case 'petugas':
+                    return redirect()->route('petugas.peminjaman.index');
+
+                case 'peminjam':
+                    return redirect()->route('peminjam.alat.index');
+
+                default:
+                    Auth::logout();
+
+                    return redirect()->route('login')
+                        ->with('error', 'Role tidak dikenali.');
+            }
         }
 
-        return back()->withErrors([
-            'email' => 'email atau password salah.',
-        ])->onlyInput('email');
+        return back()
+            ->withErrors([
+                'email' => 'Email atau password salah.',
+            ])
+            ->onlyInput('email');
     }
 
     // Proses Logout

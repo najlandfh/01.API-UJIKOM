@@ -98,6 +98,10 @@
                         </th>
 
                         <th class="px-4 py-3 text-left">
+                            Nama Alat
+                        </th>
+
+                        <th class="px-4 py-3 text-left">
                             Tanggal Kembali
                         </th>
 
@@ -138,6 +142,23 @@
                             <td class="px-4 py-3 font-medium text-gray-800">
 
                                 {{ $pengembalian->peminjaman->user->name ?? '-' }}
+
+                            </td>
+
+                            {{-- NAMA ALAT --}}
+                            <td class="px-4 py-3">
+
+                                @forelse($pengembalian->peminjaman->detailPinjams ?? [] as $detail)
+
+                                    <div>
+                                        {{ $detail->alat->nama_alat ?? '-' }}
+                                    </div>
+
+                                @empty
+
+                                    -
+
+                                @endforelse
 
                             </td>
 
@@ -229,7 +250,7 @@
                         <tr>
 
                             <td
-                                colspan="7"
+                                colspan="8"
                                 class="px-4 py-10 text-center text-gray-500"
                             >
                                 Belum ada data pengembalian.

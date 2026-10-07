@@ -22,17 +22,44 @@ class AdminController extends Controller
     // DASHBOARD ADMIN
     // =========================================================
 
-    // Menampilkan Dashboard Admin & Log Aktivitas
+    // Menampilkan Dashboard Admin & Statistik
     public function index()
+    {
+        $totalUser = User::count();
+        $totalKategori = Kategori::count();
+        $totalAlat = Alat::count();
+        $totalPeminjaman = Peminjaman::count();
+        $totalPengembalian = Pengembalian::count();
+
+        // Log aktivitas terbaru
+        $logs = LogAktivitas::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('admin.dashboard', compact(
+            'totalUser',
+            'totalKategori',
+            'totalAlat',
+            'totalPeminjaman',
+            'totalPengembalian',
+            'logs'
+        ));
+    }
+
+    // =========================================================
+    // LOG AKTIVITAS
+    // =========================================================
+
+    // Menampilkan seluruh log aktivitas
+    public function indexLogAktivitas()
     {
         $logs = LogAktivitas::with('user')
             ->latest()
-            ->take(10)
-            ->get();
+            ->paginate(10);
 
-        return view('admin.dashboard', compact('logs'));
+        return view('admin.log_aktivitas.index', compact('logs'));
     }
-
 
     // =========================================================
     // CRUD ALAT
@@ -285,12 +312,12 @@ class AdminController extends Controller
         if ($request->hasFile('foto')) {
 
             // Hapus foto lama dari storage
-            if ($user->foto_profile && Storage::disk('public')->exists($user->foto_profile)) {
-                Storage::disk('public')->delete($user->foto_profile);
+            if ($user->foto && Storage::disk('public')->exists($user->foto)) {
+                Storage::disk('public')->delete($user->foto);
             }
 
             // Simpan foto baru
-            $data['foto_profile'] = $request->file('foto')->store('foto-profil', 'public');
+            $data['foto'] = $request->file('foto')->store('foto-profil', 'public');
         }
 
         $user->update($data);
@@ -311,6 +338,13 @@ class AdminController extends Controller
     public function destroyUser($id)
     {
         $user = User::findOrFail($id);
+
+        // Admin tidak boleh menghapus akun sendiri
+        if ($user->id === auth()->id()) {
+            return redirect()
+                ->route('admin.user.index')
+                ->with('error', 'Admin tidak dapat menghapus akun sendiri.');
+        }
 
         $namaUser = $user->name;
 
@@ -401,7 +435,7 @@ class AdminController extends Controller
         $kategori = Kategori::findOrFail($id);
 
         $request->validate([
-            'nama_kategori' => 'required|string|max:255|unique:kategoris,nama_kategori,' . $id,
+            'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori,' . $id,
         ]);
 
         $kategori->update([
@@ -425,7 +459,7 @@ class AdminController extends Controller
         $kategori = Kategori::findOrFail($id);
 
         // Cek apakah kategori masih digunakan oleh alat
-        if ($kategori->alats()->count() > 0) {
+        if ($kategori->alat()->count() > 0) {
             return redirect()
                 ->route('admin.kategori.index')
                 ->with(
@@ -692,7 +726,8 @@ class AdminController extends Controller
             ->with('success', 'Status peminjaman berhasil diperbarui.');
     }
 
-        // =========================================================
+
+    // =========================================================
     // CRUD PENGEMBALIAN
     // =========================================================
 
@@ -701,7 +736,11 @@ class AdminController extends Controller
     {
         $search = $request->input('search');
 
-        $pengembalians = Pengembalian::with(['peminjaman.user', 'petugas'])
+        $pengembalians = Pengembalian::with([
+        'peminjaman.user',
+        'peminjaman.detailPinjams.alat',
+        'petugas'
+    ])
             ->when($search, function ($query, $search) {
                 return $query->where('kondisi_kembali', 'like', "%{$search}%")
                     ->orWhereHas('peminjaman.user', function ($q) use ($search) {

@@ -26,13 +26,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/peminjaman/{peminjaman}/approve', [PeminjamanController::class, 'approve']);
         Route::put('/peminjaman/{peminjaman}', [PeminjamanController::class, 'update']);
         Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy']);
+        Route::get('/pengembalian', [PengembalianController::class, 'index']);
+        Route::get('/pengembalian/{pengembalian}', [PengembalianController::class, 'show']);
+        Route::put('/pengembalian/{pengembalian}', [PengembalianController::class, 'update']);
+        Route::delete('/pengembalian/{pengembalian}', [PengembalianController::class, 'destroy']);
+        Route::get('/log-aktivitas', [LogAktivitasController::class, 'index']);
     });
 
     Route::middleware('role.petugas')->group(function () {
 
         // Route untuk hak akses petugas
-        Route::post('/peminjaman/{peminjaman}/approve', 
-        [PeminjamanController::class, 'approve']);
+        Route::post('/peminjaman/{peminjaman}/approve', [PeminjamanController::class, 'approve']);
+        Route::post('/pengembalian', [PengembalianController::class, 'store']);
 
     });
 

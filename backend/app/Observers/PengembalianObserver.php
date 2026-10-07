@@ -4,40 +4,37 @@ namespace App\Observers;
 
 use App\Models\Pengembalian;
 use App\Models\LogAktivitas;
+use Illuminate\Support\Facades\Auth;
 
 class PengembalianObserver
 {
-    public function created(Pengembalian $pengembalian)
+    private function catatLog(string $pesan): void
     {
-        LogAktivitas::create([
-            'user_id' => auth()->id() ?? $pengembalian->petugas_id,
-            'aktivitas' => "Memproses pengembalian alat untuk Peminjaman ID: {$pengembalian->peminjaman_id} dengan kondisi '{$pengembalian->kondisi_kembali}' dan denda Rp " . number_format($pengembalian->denda, 0, ',', '.') . ".",
-        ]);
-    }
-
-    public function updated(Pengembalian $pengembalian)
-    {
-        $changes = [];
-        foreach ($pengembalian->getChanges() as $key => $newValue) {
-            if ($key !== 'updated_at') {
-                $oldValue = $pengembalian->getOriginal($key);
-                $changes[] = "kolom '{$key}' dari '{$oldValue}' ke '{$newValue}'";
-            }
+        if (Auth::check()) {
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => $pesan,
+            ]);
         }
-
-        $detailPerubahan = !empty($changes) ? implode(', ', $changes) : 'memperbarui data';
-
-        LogAktivitas::create([
-            'user_id' => auth()->id(),
-            'aktivitas' => "Memperbarui pengembalian ID {$pengembalian->id}: {$detailPerubahan}.",
-        ]);
     }
 
-    public function deleted(Pengembalian $pengembalian)
+    public function created(Pengembalian $pengembalian): void
     {
-        LogAktivitas::create([
-            'user_id' => auth()->id(),
-            'aktivitas' => "Menghapus data pengembalian (ID: {$pengembalian->id}).",
-        ]);
+        $this->catatLog("Memproses pengembalian alat untuk Peminjaman ID: {$pengembalian->peminjaman_id}");
+    }
+
+    public function updated(Pengembalian $pengembalian): void
+    {
+        $perubahan = array_diff(array_keys($pengembalian->getChanges()), ['updated_at']);
+
+        if (!empty($perubahan)) {
+            $perubahan = implode(', ', $perubahan);
+            $this->catatLog("Memperbarui data pengembalian (ID Kembali: {$pengembalian->id}, Peminjaman ID: {$pengembalian->peminjaman_id}, Kolom diubah: {$perubahan})");
+        }
+    }
+
+    public function deleted(Pengembalian $pengembalian): void
+    {
+        $this->catatLog("Membatalkan/menghapus riwayat pengembalian (Peminjaman ID: {$pengembalian->peminjaman_id})");
     }
 }

@@ -4,40 +4,39 @@ namespace App\Observers;
 
 use App\Models\Peminjaman;
 use App\Models\LogAktivitas;
+use Illuminate\Support\Facades\Auth;
 
 class PeminjamanObserver
 {
-    public function created(Peminjaman $peminjaman)
+    private function catatLog(string $pesan): void
     {
-        LogAktivitas::create([
-            'user_id' => auth()->id() ?? $peminjaman->user_id,
-            'aktivitas' => "Menambahkan data peminjaman baru (ID: {$peminjaman->id}) dengan status: {$peminjaman->status}.",
-        ]);
+        if (Auth::check()) {
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => $pesan,
+            ]);
+        }
     }
 
-    public function updated(Peminjaman $peminjaman)
+    public function created(Peminjaman $peminjaman): void
     {
-        $changes = [];
-        foreach ($peminjaman->getChanges() as $key => $newValue) {
-            if ($key !== 'updated_at') {
-                $oldValue = $peminjaman->getOriginal($key);
-                $changes[] = "kolom '{$key}' berubah dari '{$oldValue}' menjadi '{$newValue}'";
+        $namaPeminjam = $peminjaman->user ? $peminjaman->user->name : 'User';
+        $this->catatLog("Peminjaman ({$namaPeminjam}) membuat peminjaman baru (ID: {$peminjaman->id})");
+    }
+
+    public function updated(Peminjaman $peminjaman): void
+    {
+        if ($peminjaman->isDirty('status')) {
+            $this->catatLog("Status peminjaman (ID: {$peminjaman->id}) berubah menjadi '{$peminjaman->status}'");
+        } else {
+            if (!empty($peminjaman->getChanges())) {
+                $this->catatLog("Memperbarui detail data peminjaman (ID: {$peminjaman->id})");
             }
         }
-
-        $detailPerubahan = !empty($changes) ? implode(', ', $changes) : 'memperbarui data';
-
-        LogAktivitas::create([
-            'user_id' => auth()->id(),
-            'aktivitas' => "Memperbarui peminjaman ID {$peminjaman->id}: {$detailPerubahan}.",
-        ]);
     }
 
-    public function deleted(Peminjaman $peminjaman)
+    public function deleted(Peminjaman $peminjaman): void
     {
-        LogAktivitas::create([
-            'user_id' => auth()->id(),
-            'aktivitas' => "Menghapus data peminjaman (ID: {$peminjaman->id}).",
-        ]);
+        $this->catatLog("Membatalkan/menghapus peminjaman peminjaman (ID: {$peminjaman->id})");
     }
 }

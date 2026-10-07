@@ -114,9 +114,9 @@
                             {{-- FOTO --}}
                             <td class="py-3 px-4 border-b">
 
-                                @if($user->foto_profile)
+                                @if($user->foto)
                                     <img
-                                        src="{{ asset('storage/' . $user->foto_profile) }}"
+                                        src="{{ asset('storage/' . $user->foto) }}"
                                         alt="Foto {{ $user->name }}"
                                         class="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
                                     >

@@ -22,6 +22,8 @@ Route::middleware(['auth', 'role.admin'])
         Route::get('/dashboard', [AdminController::class, 'index'])
             ->name('dashboard');
 
+        Route::get('/log-aktivitas', [AdminController::class, 'indexLogAktivitas'])
+            ->name('log-aktivitas.index');
 
         // ==================== CRUD ALAT ====================
 
@@ -115,6 +117,21 @@ Route::middleware(['auth', 'role.admin'])
         Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])
             ->name('peminjaman.destroy');
 
+        // ==================== PETUGAS PEMINJAMAN ====================
+    Route::prefix('petugas')->name('petugas.')->group(function () {
+
+        Route::get('/peminjaman', [PetugasController::class, 'indexPeminjaman'])
+            ->name('peminjaman.index');
+
+        // Route untuk Setujui dan Tolak
+        Route::patch('/peminjaman/{id}/setujui', [PetugasController::class, 'setujuiPeminjaman'])
+            ->name('peminjaman.setujui');
+
+        Route::patch('/peminjaman/{id}/tolak', [PetugasController::class, 'tolakPeminjaman'])
+            ->name('peminjaman.tolak');
+
+    });
+
 
         // ==================== UPDATE STATUS PEMINJAMAN ====================
 
@@ -174,10 +191,10 @@ Route::middleware(['auth', 'role.petugas'])
         Route::post('/peminjaman/{id}/setujui', [PetugasController::class, 'setujuiPeminjaman'])
             ->name('peminjaman.setujui');
 
-        Route::post('/peminjaman/{id}/tolak', [PetugasController::class, 'tolakPeminjaman'])
+        Route::put('/peminjaman/{id}/tolak', [PetugasController::class, 'tolakPeminjaman'])
             ->name('peminjaman.tolak');
 
-
+            
         // ==================== PENGEMBALIAN & DENDA ====================
         Route::get('/pengembalian', [PetugasController::class, 'indexPengembalian'])
             ->name('pengembalian.index');
