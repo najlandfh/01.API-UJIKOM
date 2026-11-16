@@ -259,6 +259,14 @@ Route::middleware(['auth', 'role.peminjam'])
     });
 
 
+// Register Peminjam
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])
+        ->name('register');
+
+    Route::post('/register', [AuthController::class, 'register'])
+        ->name('register.store');
+
+
 // ==================== ROUTE TAMU ====================
 
 Route::middleware('guest')->group(function () {
